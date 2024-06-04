@@ -17,7 +17,8 @@ public class Part2 {
         // Receber do próprio aluno:
         // - a chave AES s -> em hexadecimal
         if (args.length != 3) {
-            System.out.println("Uso: java Part2 <mensagem_prof_c> <assinatura_prof_sigc> <chave_AES_aluno_s> (VALORES EM HEXADECIMAL)");
+            System.out.println(
+                    "Uso: java Part2 <mensagem_prof_c> <assinatura_prof_sigc> <chave_aes_aluno_s> (VALORES EM HEXADECIMAL)");
             return;
         }
         String cHex = args[0];
@@ -39,26 +40,15 @@ public class Part2 {
         }
         System.out.println("Assinatura válida");
 
-        // Se sim, decifrar a mensagem c com AES (chave s, CBC, PKCS), tendo m = AES^-1(c, s)
-        byte[] c = hexStringToByteArray(cHex);
-        ExtractBytesResult extractionResults = extractBytes(c, 16);
-        byte[] iv = extractionResults.extracted;
-        byte[] ciphertext = extractionResults.remaining;
-        byte[] keyBytes = hexStringToByteArray(sHex);
-        if (keyBytes.length != 16) {
-            System.out.println("Chave AES deve ter 16 bytes");
-            return;
-        }
-        SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
+        // Se sim, decifrar a mensagem c com AES (chave s, CBC, PKCS), tendo m =
+        // AES^-1(c, s)
+        String m;
         try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(iv));
-            byte[] plaintext = cipher.doFinal(ciphertext);
-            String m = new String(plaintext, "UTF-8");
+            m = decryptAES(cHex, sHex);
             System.out.println("Mensagem decifrada: " + m);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Erro ao decifrar a mensagem");
+            System.out.println("Erro ao decifrar a mensagem: " + e.getMessage());
+            return;
         }
     }
 
@@ -85,32 +75,39 @@ public class Part2 {
         }
     }
 
-    // Método auxiliar para converter um array de bytes para uma string hexadecimal
-    public static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
+    // Método para decifrar a mensagem usando AES
+    public static String decryptAES(String cHex, String sHex) throws Exception {
+        byte[] cBytes = hexStringToByteArray(cHex);
+        byte[] sBytes = hexStringToByteArray(sHex);
+
+        // Verificar o comprimento da chave AES
+        if (sBytes.length != 16) {
+            throw new IllegalArgumentException("Chave AES deve ter 16 bytes (128 bits)");
         }
-        return sb.toString();
-    }
 
-    // Método auxiliar para extrair os primeiros n bytes de um array de bytes
-    public static ExtractBytesResult extractBytes(byte[] input, int n) {
-        byte[] extracted = new byte[n];
-        byte[] remaining = new byte[input.length - n];
-        System.arraycopy(input, 0, extracted, 0, n);
-        System.arraycopy(input, n, remaining, 0, input.length - n);
-        return new ExtractBytesResult(extracted, remaining);
-    }
+        // Extrair IV dos primeiros 16 bytes de cHex
+        byte[] ivBytes = new byte[16];
+        System.arraycopy(cBytes, 0, ivBytes, 0, 16);
 
-    // Classe auxiliar para armazenar o resultado da extração
-    public static class ExtractBytesResult {
-        public byte[] extracted;
-        public byte[] remaining;
+        // Extrair a mensagem cifrada dos bytes restantes
+        byte[] cipherTextBytes = new byte[cBytes.length - 16];
+        System.arraycopy(cBytes, 16, cipherTextBytes, 0, cipherTextBytes.length);
 
-        public ExtractBytesResult(byte[] extracted, byte[] remaining) {
-            this.extracted = extracted;
-            this.remaining = remaining;
+        // Verificar se o comprimento da mensagem cifrada é múltiplo de 16 bytes
+        if (cipherTextBytes.length % 16 != 0) {
+            throw new IllegalArgumentException("Comprimento da mensagem cifrada inválido");
         }
+
+        // Configurar o AES para decifrar com CBC e padding PKCS5
+        SecretKeySpec secretKeySpec = new SecretKeySpec(sBytes, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(ivBytes);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+
+        byte[] decryptedBytes = cipher.doFinal(cipherTextBytes);
+
+        // Converter os bytes decifrados para uma string
+        return new String(decryptedBytes, "UTF-8");
     }
 }

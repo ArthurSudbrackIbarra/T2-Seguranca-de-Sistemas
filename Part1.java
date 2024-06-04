@@ -51,7 +51,7 @@ public class Part1 {
 
         // Printar os valores que ficam com o aluno
         System.out.println("\n=== Valores que ficam com o aluno (em hexadecimal) ===\n");
-        System.out.println("s: " + bigIntegerToHex(s));
+        System.out.println("s: " + bigIntegerToHex(s) + "\n");
         System.out.println("da: " + bigIntegerToHex(da));
     }
 
