@@ -2,15 +2,9 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 
 /**
- * GenerateValues
+ * Part1
  */
-public class GenerateValues {
-
-    // Constantes
-    public static final BigInteger epTeacher = new BigInteger("2E76A0094D4CEE0AC516CA162973C895", 16);
-    public static final BigInteger npTeacher = new BigInteger(
-            "1985008F25A025097712D26B5A322982B6EBAFA5826B6EDA3B91F78B7BD63981382581218D33A9983E4E14D4B26113AA2A83BBCCFDE24310AEE3362B6100D06CC1EA429018A0FF3614C077F59DE55AADF449AF01E42ED6545127DC1A97954B89729249C6060BA4BD3A59490839072929C0304B2D7CBBA368AEBC4878A6F0DA3FE58CECDA638A506C723BDCBAB8C355F83C0839BF1457A3B6B89307D672BBF530C93F022E693116FE4A5703A665C6010B5192F6D1FAB64B5795876B2164C86ABD7650AEDAF5B6AFCAC0438437BB3BDF5399D80F8D9963B5414EAFBFA1AA2DD0D24988ACECA8D50047E5A78082295A987369A67D3E54FFB7996CBE2C5EAD794391",
-            16);
+public class Part1 {
 
     // Main
     public static void main(String[] args) {
@@ -40,10 +34,10 @@ public class GenerateValues {
         // Escolher um valor aleatório s de 128 bit -> chave a ser usada no AES
         BigInteger s = new BigInteger(128, new SecureRandom());
 
-        // Calcular x = sep mod Np -> cifra a chave usando a chave pública do professor
-        BigInteger x = s.modPow(epTeacher, npTeacher);
+        // Calcular x = s^ep mod Np -> cifra a chave usando a chave pública do professor
+        BigInteger x = s.modPow(Constants.epTeacher, Constants.npTeacher);
 
-        // Calcular sigx = xda mod Na -> assina a mensagem usando a chave privada do
+        // Calcular sigx = x^da mod Na -> assina a mensagem usando a chave privada do
         // aluno
         BigInteger sigx = x.modPow(da, na);
 
@@ -64,15 +58,9 @@ public class GenerateValues {
         return e;
     }
 
-    // Função auxiliar para receber um BigInteger e printar o valor em hexadecimal,
-    // adicionando um bit 0 na frente caso o bit mais significativo seja 1
+    // Função auxiliar para receber um BigInteger e printar o valor em hexadecimal.
     public static String bigIntegerToHex(BigInteger value) {
         String hex = value.toString(16);
-        char fc = hex.charAt(0);
-        if (fc == '8' || fc == '9' || fc == 'a' || fc == 'b' || fc == 'c'
-                || fc == 'd' || fc == 'e' || fc == 'f') {
-            hex = "0" + hex;
-        }
         return hex.toUpperCase();
     }
 }
