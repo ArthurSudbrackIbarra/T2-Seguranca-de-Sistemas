@@ -2,6 +2,9 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Part2
+ */
 public class Part2 {
 
     public static void main(String[] args) {
@@ -16,16 +19,12 @@ public class Part2 {
         BigInteger sigc = new BigInteger(args[1], 16);
 
         // Calcular hc = SHA256(c)
-        byte[] cBytes = hexStringToByteArray(cHex);
-        BigInteger hc;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(cBytes);
-            hc = new BigInteger(1, hash);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        byte[] hash = sha256FromHexString(cHex);
+        if (hash == null) {
+            System.out.println("Erro ao calcular hash SHA-256");
             return;
         }
+        BigInteger hc = new BigInteger(1, hash);
 
         // Verificar se hc = sigc^ep mod Np
         if (hc.compareTo(sigc.modPow(Constants.epTeacher, Constants.npTeacher)) == 0) {
@@ -34,6 +33,9 @@ public class Part2 {
             System.out.println("Assinatura inválida");
             return;
         }
+
+        // Se sim, decifrar a mensagem c com AES (chave s, CBC, PKCS), tendo m = AES^-1(c, s)
+        
 
     }
 
@@ -46,6 +48,18 @@ public class Part2 {
                     + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
+    }
+
+    // Método auxiliar para calcular o hash SHA-256 de uma string hexadecimal
+    public static byte[] sha256FromHexString(String s) {
+        byte[] data = hexStringToByteArray(s);
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return digest.digest(data);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }

@@ -49,7 +49,7 @@ public class Part1 {
         System.out.println("na: " + bigIntegerToHex(na));
     }
 
-    // Função auxiliar para encontrar um número primo relativo a L
+    // Método auxiliar para encontrar um número primo relativo a L
     public static BigInteger findRelativePrime(BigInteger l) {
         BigInteger e = BigInteger.probablePrime(1024, new SecureRandom());
         while (l.gcd(e).compareTo(BigInteger.ONE) != 0) {
@@ -58,7 +58,7 @@ public class Part1 {
         return e;
     }
 
-    // Função auxiliar para receber um BigInteger e printar o valor em hexadecimal.
+    // Método auxiliar para receber um BigInteger e printar o valor em hexadecimal.
     public static String bigIntegerToHex(BigInteger value) {
         String hex = value.toString(16);
         return hex.toUpperCase();
