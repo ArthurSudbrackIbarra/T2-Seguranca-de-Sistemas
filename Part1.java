@@ -43,10 +43,16 @@ public class Part1 {
 
         // Enviar (x, sigx, pka) para o professor por email ou whatsapp -> todos os
         // valores em hexadecimal
+        System.out.println("=== Dados a serem enviados para o professor (em hexadecimal) ===\n");
         System.out.println("x: " + bigIntegerToHex(x) + "\n");
         System.out.println("sigx: " + bigIntegerToHex(sigx) + "\n");
         System.out.println("ea: " + bigIntegerToHex(ea) + "\n");
         System.out.println("na: " + bigIntegerToHex(na));
+
+        // Printar os valores que ficam com o aluno
+        System.out.println("\n=== Valores que ficam com o aluno (em hexadecimal) ===\n");
+        System.out.println("s: " + bigIntegerToHex(s));
+        System.out.println("da: " + bigIntegerToHex(da));
     }
 
     // Método auxiliar para encontrar um número primo relativo a L
