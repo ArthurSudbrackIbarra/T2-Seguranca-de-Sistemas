@@ -1,6 +1,8 @@
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -60,6 +62,37 @@ public class Part2 {
             System.out.println("Erro ao decifrar a mensagem: " + e.getMessage());
             return;
         }
+
+        // Inverter a mensagem m decifrada gerando minv. Exemplo, se m = “pucrs”, então minv “srcup”
+        String minv = reverseString(m);
+
+        // Gerar um IV aleatório
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+
+        // Cifrar minv usando AES (chave s, CBC, PKCS), tendo cinv = concatenar(IV, AES(minv, s))
+        byte[] cipherText;
+        try {
+            cipherText = encryptAES(minv, s, iv);
+        } catch (Exception e) {
+            System.out.println("Erro ao cifrar a mensagem: " + e.getMessage());
+            return;
+        }
+        byte[] cinvBytes = new byte[iv.length + cipherText.length];
+        System.arraycopy(iv, 0, cinvBytes, 0, iv.length);
+        System.arraycopy(cipherText, 0, cinvBytes, iv.length, cipherText.length);
+        BigInteger cinv = new BigInteger(1, cinvBytes);
+
+        // Calcular hinv = SHA256(cinv)
+        byte[] hinv = sha256Hash(cinv);
+
+        // Calcular sighinv = hinv^da mod Na
+        BigInteger sighinv = new BigInteger(1, hinv).modPow(da, na);
+
+        // Enviar (cinv, sighinv) para o professor -> todos os valores em hexadecimal.
+        System.out.println("=== Dados a serem enviados para o professor (em hexadecimal) ===\n");
+        System.out.println("cinv: " + bigIntegerToHex(cinv) + "\n");
+        System.out.println("sighinv: " + bigIntegerToHex(sighinv));
     }
 
     // Método auxiliar para converter um BigInteger para um array de bytes
@@ -74,23 +107,12 @@ public class Part2 {
         return data;
     }
 
-    // Método auxiliar para converter uma string hexadecimal para um array de bytes
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
     // Método auxiliar para calcular o hash SHA-256
     public static byte[] sha256Hash(BigInteger s) {
-        byte[] data = bigIntegerToByteArray(s);
+        byte[] sBytes = bigIntegerToByteArray(s);
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return digest.digest(data);
+            return digest.digest(sBytes);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
@@ -131,5 +153,33 @@ public class Part2 {
 
         // Converter os bytes decifrados para uma string
         return new String(decryptedBytes, "UTF-8");
+    }
+
+    // Método para cifrar a mensagem usando AES
+    public static byte[] encryptAES(String minv, BigInteger s, byte[] iv) throws Exception {
+        byte[] sBytes = bigIntegerToByteArray(s);
+        
+        SecretKeySpec secretKeySpec = new SecretKeySpec(sBytes, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
+
+        return cipher.doFinal(minv.getBytes("UTF-8"));
+    }
+
+    // Método auxiliar para inverter uma string
+    public static String reverseString(String s) {
+        return new StringBuilder(s).reverse().toString();
+    }
+
+    // Método auxiliar para receber um BigInteger e retornar o valor em hexadecimal.
+    public static String bigIntegerToHex(BigInteger value) {
+        String hex = value.toString(16).toUpperCase();
+        // Adicionar um byte 0 no início se o valor começar com {8, 9, A, B, C, D, E, F}
+        if (hex.matches("^[89A-F].*")) {
+            hex = "00" + hex;
+        }
+        return hex;
     }
 }
