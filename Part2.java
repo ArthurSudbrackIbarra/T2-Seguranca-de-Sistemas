@@ -16,17 +16,28 @@ public class Part2 {
         // - uma assinatura sigc para a mensagem c -> em hexadecimal
         // Receber do próprio aluno:
         // - a chave AES s -> em hexadecimal
-        if (args.length != 3) {
+        // - o módulo da chave pública na -> em hexadecimal
+        // - a chave privada da -> em hexadecimal
+        if (args.length != 4) {
             System.out.println(
-                    "Uso: java Part2 <mensagem_prof_c> <assinatura_prof_sigc> <chave_aes_aluno_s> (VALORES EM HEXADECIMAL)");
+                    "\nUso: java Part2 c sigc s na da\n\n"
+                            +
+                            "Os argumentos devem ser fornecidos em hexadecimal.\n\n" +
+                            "c       : A mensagem cifrada recebida do professor.\n" +
+                            "sigc    : A assinatura da mensagem cifrada fornecida pelo professor.\n" +
+                            "s       : A chave simétrica AES do aluno utilizada para decifrar a mensagem.\n" +
+                            "na      : O módulo Na da chave pública do aluno.\n" +
+                            "da      : A chave privada da do aluno utilizada para assinar a mensagem.\n");
             return;
         }
-        String cHex = args[0];
+        BigInteger c = new BigInteger(args[0], 16);
         BigInteger sigc = new BigInteger(args[1], 16);
-        String sHex = args[2];
+        BigInteger s = new BigInteger(args[2], 16);
+        BigInteger na = new BigInteger(args[3], 16);
+        BigInteger da = new BigInteger(args[4], 16);
 
         // Calcular hc = SHA256(c)
-        byte[] hash = sha256FromHexString(cHex);
+        byte[] hash = sha256Hash(c);
         if (hash == null) {
             System.out.println("Erro ao calcular hash SHA-256");
             return;
@@ -36,7 +47,6 @@ public class Part2 {
         // Verificar se hc = sigc^ep mod Np
         if (hc.compareTo(sigc.modPow(Constants.epTeacher, Constants.npTeacher)) != 0) {
             System.out.println("Assinatura inválida");
-            return;
         }
         System.out.println("Assinatura válida");
 
@@ -44,12 +54,24 @@ public class Part2 {
         // AES^-1(c, s)
         String m;
         try {
-            m = decryptAES(cHex, sHex);
+            m = decryptAES(c, s);
             System.out.println("Mensagem decifrada: " + m);
         } catch (Exception e) {
             System.out.println("Erro ao decifrar a mensagem: " + e.getMessage());
             return;
         }
+    }
+
+    // Método auxiliar para converter um BigInteger para um array de bytes
+    public static byte[] bigIntegerToByteArray(BigInteger b) {
+        byte[] data = b.toByteArray();
+        // Se o primeiro byte for 0, remover
+        if (data[0] == 0) {
+            byte[] tmp = new byte[data.length - 1];
+            System.arraycopy(data, 1, tmp, 0, tmp.length);
+            return tmp;
+        }
+        return data;
     }
 
     // Método auxiliar para converter uma string hexadecimal para um array de bytes
@@ -63,9 +85,9 @@ public class Part2 {
         return data;
     }
 
-    // Método auxiliar para calcular o hash SHA-256 de uma string hexadecimal
-    public static byte[] sha256FromHexString(String s) {
-        byte[] data = hexStringToByteArray(s);
+    // Método auxiliar para calcular o hash SHA-256
+    public static byte[] sha256Hash(BigInteger s) {
+        byte[] data = bigIntegerToByteArray(s);
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return digest.digest(data);
@@ -76,9 +98,9 @@ public class Part2 {
     }
 
     // Método para decifrar a mensagem usando AES
-    public static String decryptAES(String cHex, String sHex) throws Exception {
-        byte[] cBytes = hexStringToByteArray(cHex);
-        byte[] sBytes = hexStringToByteArray(sHex);
+    public static String decryptAES(BigInteger c, BigInteger s) throws Exception {
+        byte[] cBytes = bigIntegerToByteArray(c);
+        byte[] sBytes = bigIntegerToByteArray(s);
 
         // Verificar o comprimento da chave AES
         if (sBytes.length != 16) {
