@@ -20,7 +20,7 @@ public class Part2 {
         // - a chave AES s -> em hexadecimal
         // - o módulo da chave pública na -> em hexadecimal
         // - a chave privada da -> em hexadecimal
-        if (args.length != 4) {
+        if (args.length != 5) {
             System.out.println(
                     "\nUso: java Part2 c sigc s na da\n\n"
                             +
@@ -63,14 +63,16 @@ public class Part2 {
             return;
         }
 
-        // Inverter a mensagem m decifrada gerando minv. Exemplo, se m = “pucrs”, então minv “srcup”
+        // Inverter a mensagem m decifrada gerando minv. Exemplo, se m = “pucrs”, então
+        // minv “srcup”
         String minv = reverseString(m);
 
         // Gerar um IV aleatório
         byte[] iv = new byte[16];
         new SecureRandom().nextBytes(iv);
 
-        // Cifrar minv usando AES (chave s, CBC, PKCS), tendo cinv = concatenar(IV, AES(minv, s))
+        // Cifrar minv usando AES (chave s, CBC, PKCS), tendo cinv = concatenar(IV,
+        // AES(minv, s))
         byte[] cipherText;
         try {
             cipherText = encryptAES(minv, s, iv);
@@ -81,12 +83,16 @@ public class Part2 {
         byte[] cinvBytes = new byte[iv.length + cipherText.length];
         System.arraycopy(iv, 0, cinvBytes, 0, iv.length);
         System.arraycopy(cipherText, 0, cinvBytes, iv.length, cipherText.length);
+        // ! cinv =
+        // 98F9BC7AF9EF72A9D33F164BA01AD919E6A5116958CE96DF0DF4B28B2214F40948A2D174EF57E06EDD3225EFCCA25EC5695D8440E31583FF3DAE4BF759D0930BA744D9F2D304EF93BEDAAA266C662EAE
         BigInteger cinv = new BigInteger(1, cinvBytes);
 
         // Calcular hinv = SHA256(cinv)
         byte[] hinv = sha256Hash(cinv);
 
         // Calcular sighinv = hinv^da mod Na
+        // ! sighinv =
+        // 5CC66CE6C38D1B15FD3C0B3CA4A40186F1654D3502590FB19C8D92F908D7DDDD7A894B607DBC480275C5CAC07296742575A90E85996B6DBDD61FA4F0824064F14EC398808D123223BDB1F6CE90377EA14750F4462EE574BEC8CD7BEC6BEC332FB348C1A109D8E6A583B7880D4E3C8A4890C3F49306BCF3379AF30C6FD236EE3EABE0535AF497489E5660024BBD64244D90FED8AE7AA24B7003A2F9A1D9A764373845218BAD8BE8E0A876B65DB249B233B9613CEE2B7117CC4B4D5F2A13F58A99BAB7A566492DFD3836ABE1EB340AC9D373CAB1F41FDD7C09D44CEF98A1DE99DEFD7F6AA1CE1E323264DFCB2D7D3C8B9DE77C62EE7800DF37D4AFE870FAA0CBEF
         BigInteger sighinv = new BigInteger(1, hinv).modPow(da, na);
 
         // Enviar (cinv, sighinv) para o professor -> todos os valores em hexadecimal.
@@ -158,7 +164,7 @@ public class Part2 {
     // Método para cifrar a mensagem usando AES
     public static byte[] encryptAES(String minv, BigInteger s, byte[] iv) throws Exception {
         byte[] sBytes = bigIntegerToByteArray(s);
-        
+
         SecretKeySpec secretKeySpec = new SecretKeySpec(sBytes, "AES");
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
@@ -174,12 +180,19 @@ public class Part2 {
     }
 
     // Método auxiliar para receber um BigInteger e retornar o valor em hexadecimal.
-    public static String bigIntegerToHex(BigInteger value) {
+    // Este método adiciona um byte 0 no início se o valor começar com {8, 9, A, B,
+    // C, D, E, F}
+    public static String bigIntegerToHexAdd0(BigInteger value) {
         String hex = value.toString(16).toUpperCase();
         // Adicionar um byte 0 no início se o valor começar com {8, 9, A, B, C, D, E, F}
         if (hex.matches("^[89A-F].*")) {
             hex = "00" + hex;
         }
         return hex;
+    }
+
+    // Método auxiliar para receber um BigInteger e retornar o valor em hexadecimal.
+    public static String bigIntegerToHex(BigInteger value) {
+        return value.toString(16).toUpperCase();
     }
 }
